@@ -1,0 +1,28 @@
+title: Detect PowerShell Junk Code and Parameter Insertion
+id: f1a2b3c4-d5e6-7890-abcd-ef0123456789
+status: test
+description: Detects PowerShell scripts containing excessive parameter insertion or repeated filler commands that may indicate junk code obfuscation.
+author: Pham Tien Phat
+date: 2026-08-01
+logsource:
+    product: windows
+    category: ps_script
+    definition: PowerShell Script Block Logging must be enabled (Event ID 4104)
+detection:
+    selection_iex_junk_params:
+        ScriptBlockText|re: '(?i)(iex|Invoke-Expression)\s+(-(Debug|Verbose|ErrorVariable|InformationAction|WarningAction|ErrorAction|OutVariable|OutBuffer)\s+[^-\s]+\s*){2,}'
+    selection_repeated_micro_sleeps:
+        ScriptBlockText|re: '(?i)(sleep\s+0\.\d+\s*;?\s*){2,}'
+    selection_filler_out_null:
+        ScriptBlockText|re: '(?i)(Get-[a-zA-Z][a-zA-Z0-9-]*\s*\|\s*Out-Null\s*;?\s*){3,}'
+
+    condition: 1 of selection_*
+falsepositives:
+    - Administrative PowerShell scripts using multiple common parameters
+    - Automated testing frameworks generating PowerShell commands
+    - Automatically generated scripts containing repeated filler commands
+level: medium
+tags:
+    - attack.defense-evasion
+    - attack.t1027
+           - attack.t1059.001

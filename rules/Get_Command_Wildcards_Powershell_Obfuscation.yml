@@ -1,0 +1,24 @@
+title: Detect PowerShell Execution via Get-Command Wildcards
+id: c4b5e6f7-890a-bcde-1234-567890abcdef
+status: test
+description: Detects PowerShell commands that use Get-Command or gcm with wildcards and immediately execute the returned command, which may indicate command obfuscation.
+author: Pham Tien Phat
+date: 2026-08-01
+logsource:
+    product: windows
+    category: ps_script
+    definition: PowerShell Script Block Logging must be enabled (Event ID 4104)
+detection:
+    selection_call_operator_wildcard:
+        ScriptBlockText|re: '[&\.]\s*\(\s*(Get-Command|gcm)\s+[^)]*[\*\?][^)]*\)'
+    condition: selection_call_operator_wildcard
+falsepositives:
+    - Administrative scripts using Get-Command with wildcards and immediate execution
+    - Automated PowerShell scripts dynamically resolving command names
+    - Legitimate scripts using aliases such as gcm
+level: medium
+tags:
+    - attack.defense-evasion
+    - attack.t1027
+    - attack.execution
+           - attack.t1059.001

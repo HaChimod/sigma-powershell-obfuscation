@@ -1,0 +1,32 @@
+title: Detect PowerShell Command and String Breaking Obfuscation
+id: 9a8b7c6d-1234-5678-abcd-ef0123456789
+status: test
+description: Detects PowerShell and Windows command lines using quote or caret characters to break command and string sequences, which may indicate command obfuscation.
+author: Pham Tien Phat
+date: 2026-08-01
+
+logsource:
+    product: windows
+    category: process_creation
+    definition: Process Creation logging must be enabled ( Windows Event ID 4688)
+detection:
+    selection_quote_breaking:
+        CommandLine|re: '(?i)[a-z][''"]{2}[a-z]'
+    selection_iex_obfuscation:
+        CommandLine|re: '(?i)i[''"]{2}e[''"]{2}x'
+    selection_caret_breaking:
+        CommandLine|re: '(?i)([a-z]\^){2,}[a-z]'
+    filter_legit_tools: Image|endswith: 
+        - '\findstr.exe' 
+filter_legit_commands: CommandLine|contains: 
+        - '^|' # Pipeline trong CMD 
+    condition: (selection_caret_breaking or selection_caret_keywords) and not 1 of filter_*
+falsepositives:
+    - Legitimate command lines containing consecutive quotation marks
+    - Scripts using caret characters for legitimate command escaping
+    - Complex automatically generated command lines
+level: medium
+tags:
+    - attack.defense-evasion
+    - attack.t1027
+           - attack.execution

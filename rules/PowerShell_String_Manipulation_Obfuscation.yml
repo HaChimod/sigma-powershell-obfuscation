@@ -1,0 +1,26 @@
+title: Detect PowerShell String Manipulation Obfuscation
+id: e2b3c4d5-a1b2-c3d4-e5f6-0123456789ab
+status: test
+description: Detects PowerShell scripts containing string reversal, excessive concatenation, or byte-to-char casting that may indicate string manipulation obfuscation. Excludes Base64 which is covered by Event ID 4103.
+author: Pham Tien Phat
+date: 2026-08-01
+logsource:
+    product: windows
+    category: ps_script
+    definition: PowerShell Script Block Logging must be enabled (Event ID 4104)
+detection:
+    selection_string_reverse:
+        ScriptBlockText|re: '(?i)\.ToCharArray\(\s*\).*\[array\]::reverse\(.*-join\s*[''"]?[''"]?'
+    selection_byte_to_char:
+        ScriptBlockText|re: '(?i)(\[char\]\s*\(\s*\[byte\]\s*0x[0-9a-fA-F]+\s*\)\s*\+\s*){2,}'
+    selection_excessive_concatenation:
+        ScriptBlockText|re: '(?i)([''"][^''"]{1,4}[''"]\s*\+\s*){4,}'
+    condition: 1 of selection_*
+falsepositives:
+    - Administrative PowerShell scripts automatically generating string formats
+    - Legitimate commercial script obfuscators used to protect intellectual property
+    - Automated code generation tools
+level: medium
+tags:
+    - attack.defense-evasion
+    - attack.t1027

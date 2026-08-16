@@ -1,0 +1,32 @@
+title: Detect PowerShell Boolean Obfuscation
+id: a1b2c3d4-5678-90ef-1234-567890abcdef
+status: test
+description: Detects PowerShell scripts using unusual Boolean type casting, repeated negation, and alternative Boolean representations, which may indicate Boolean obfuscation.
+author: Pham Tien Phat
+date: 2026-08-01
+logsource:
+    product: windows
+    category: ps_script
+    definition: PowerShell Script Block Logging must be enabled (Event ID 4104)
+detection:
+    selection_nested_and_bang:
+        ScriptBlockText|re:
+            - '(!\s*){2,}\[bool\]'
+            - '(\[bool\]\s*){2,}'
+    selection_type_casting:
+        ScriptBlockText|re: '\[bool\]\s*\[(char|int|string|double|short|decimal|byte|timespan|datetime|System\.[a-zA-Z0-9\.]+)\]'
+    selection_negate_default:
+        ScriptBlockText|re:
+            - '!\s*\[bool\]\s*\$(null|false|true)'
+            - '!\s*\[bool\]\s*0x[0-9a-fA-F]+'
+    selection_bool_conversion:
+        ScriptBlockText|re: '\[bool\]\s*\[convert\]::ToInt32\('
+    condition: selection_nested_and_bang or selection_type_casting or selection_negate_default or selection_bool_conversion
+falsepositives:
+    - Legitimate PowerShell scripts using unusual Boolean type casting
+    - Administrative scripts performing explicit data type conversion
+level: medium
+tags:
+    - attack.defense-evasion
+    - attack.t1027
+    - attack.t1059.001

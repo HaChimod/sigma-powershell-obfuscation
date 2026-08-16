@@ -1,0 +1,26 @@
+title: Detect PowerShell Obfuscated Variable Renaming
+id: a1b2c3d4-e5f6-7890-abcd-1234567890ab
+status: test
+description: Detects PowerShell scripts using unusually long hexadecimal or repeated-character variable names, which may indicate variable renaming used for code obfuscation.
+author: Pham Tien Phat
+date: 2026-08-01
+logsource:
+    product: windows
+    category: ps_script
+    definition: PowerShell Script Block Logging must be enabled (Event ID 4104)
+detection:
+    selection_hex_var:
+        ScriptBlockText|re: '\$[a-fA-F0-9]{16,32}(?=\s*[=.\)\|;,]|$)'
+    selection_repeated_var:
+        ScriptBlockText|re: '\$([a-zA-Z0-9])\1{7,}(?=\s*[=.\)\|;,]|$)'
+    condition: selection_hex_var or selection_repeated_var
+falsepositives:
+    - Automatically generated PowerShell scripts containing long identifiers
+    - Legitimate administrative scripts using generated identifiers
+    - Commercial software using generated PowerShell code
+level: medium
+
+tags:
+    - attack.defense-evasion
+    - attack.t1027
+    - attack.t1059.001
